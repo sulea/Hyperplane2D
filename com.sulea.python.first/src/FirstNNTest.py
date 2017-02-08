@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from decimal import Decimal as D
 
 # fix random seed for reproducibility
+normalize = True
 seed = 7
 np.random.seed(seed)
 
@@ -32,14 +33,25 @@ plt.show()
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers.normalization import BatchNormalization
+from keras.optimizers import sgd
 
 model = Sequential() 
 # The neuron
 # Dense: 2 inputs, 1 outputs . Linear activation
 model.add(Dense(output_dim=1, input_dim=2, activation="linear"))
-model.add(BatchNormalization())
-model.compile(loss='mean_squared_error', metrics=['accuracy'], optimizer='sgd')
-history = model.fit(inputset, outputset, validation_split=0.2, nb_epoch=50, batch_size=10)
+
+# Set a low learning to avoid overshooting on unormalized dataset
+if normalize:
+    # Add normalization layer
+    model.add(BatchNormalization())
+    model.compile(loss='mean_squared_error', metrics=['accuracy'], optimizer='sgd')
+    nb_epoch=60
+else:
+    sgd = sgd(lr=10e-6)
+    model.compile(loss='mean_squared_error', metrics=['accuracy'], optimizer=sgd)
+    nb_epoch=2000
+
+history = model.fit(inputset, outputset, validation_split=0.2, nb_epoch=nb_epoch, batch_size=10)
 
 # summarize history for loss
 plt.plot(history.history['loss'])
@@ -64,24 +76,24 @@ scores = model.evaluate(inputset, outputset)
 print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
 
 # calculate prediction for one input
-testset = np.array([[10],[0]])
+testset = np.array([[1],[10]])
+print("testset: " + str(testset))
 predictions = model.predict(testset.transpose())
-print predictions
-
-# round predictions
-rounded = [round(x) for x in predictions]
-print(rounded)
-
+print("prediction: " + str(predictions))
 
 # get the weights of the neural network
-for layer in model.layers:
-    weights = layer.get_weights()
+weights_l0 = model.layers[0].get_weights()
+
+
 # the math of the prediction
-print(weights)
+print("weights of first layer: " + str(weights_l0[0]))
+print("bias of first layer: " + str(weights_l0[1]))
+if normalize:
+    weights_l1 = model.layers[1].get_weights()
+    print("weights of second layer (normalization): " + str(weights_l1))
 
-'''
-
-prediction_calc = testset[0]*weights[0][0]+testset[1]*weights[0][1]+1*weights[1]
+if normalize:
+    prediction_calc = testset[0] * weights_l0[0][0] + testset[1] * weights_l0[0][1] + 1 * weights_l0[1]
+else:
+    prediction_calc = testset[0] * weights_l0[0][0] + testset[1] * weights_l0[0][1] + 1 * weights_l0[1]
 print prediction_calc
-print np.float64(prediction_calc)
-'''
