@@ -6,7 +6,6 @@ Created on Oct 26, 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
-from decimal import Decimal as D
 
 # fix random seed for reproducibility
 normalize = True
@@ -83,7 +82,6 @@ print("prediction: " + str(predictions))
 
 # get the weights of the neural network
 weights_l0 = model.layers[0].get_weights()
-
 
 # the math of the prediction
 print("weights of first layer: " + str(weights_l0[0]))
