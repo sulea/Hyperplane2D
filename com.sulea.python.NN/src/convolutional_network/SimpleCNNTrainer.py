@@ -6,7 +6,6 @@ Created on Feb 18, 2017
 from keras.datasets import cifar10
 import matplotlib.pyplot as plt
 import numpy as np
-from keras.datasets import cifar10
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -16,8 +15,6 @@ from keras.optimizers import SGD
 from keras.layers.convolutional import Convolution2D
 from keras.layers.convolutional import MaxPooling2D
 from keras.utils import np_utils
-from keras import backend as K
-#K.set_image_dim_ordering('th')
 
 # fix random seed for reproducibility
 seed = 7
@@ -31,23 +28,15 @@ def collectCatsAndCars(X_train_all, Y_train_all):
     for y in Y_train_all:
         if y == 1 or y == 3:
             X_train.append(X_train_all[i])
-            Y_train.append(y)
+            if y == 1:
+                Y_train.append(0)
+            else:
+                Y_train.append(1)
         i = i + 1
     
     return np.array(X_train), np.array(Y_train)
 
 # load data
-(X_train, Y_train), (X_test, Y_test) = cifar10.load_data()
-
-# filter the whole dataset and get only cats and cars
-(X_train, Y_train) = collectCatsAndCars(X_train, Y_train)
-(X_test, Y_test) = collectCatsAndCars(X_test, Y_test)
-
-# create a grid of 3x3 images
-for i in range(0, 9):
-    plt.subplot(330 + 1 + i)
-    plt.imshow(X_train[i])
-# show the plot
 (X_train, Y_train), (X_test, Y_test) = cifar10.load_data()
 
 # filter the whole dataset and get only cats and cars
@@ -91,7 +80,28 @@ model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy
 print(model.summary())
 
 # Fit the model
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), nb_epoch=epochs, batch_size=32)
+history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), nb_epoch=epochs, batch_size=32)
+
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+# summarize history for accuracy
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
 # Final evaluation of the model
 scores = model.evaluate(X_test, Y_test, verbose=0)
 print("Accuracy: %.2f%%" % (scores[1]*100))
+
+model.save('scnn.h5', True)
